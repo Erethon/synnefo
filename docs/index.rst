@@ -102,7 +102,8 @@ external world. Also documents all Synnefo external REST APIs.
    :maxdepth: 1
 
    Quick Installation Guide (single node) <quick-install-guide>
-   Installation Guide (on two nodes) <quick-install-admin-guide>
+   Installation Guide on Debian Wheezy (on two nodes) <install-guide-debian>
+   Installation Guide on CentOS 6.5 (on two nodes) <install-guide-centos>
 
 .. toctree::
    :maxdepth: 1

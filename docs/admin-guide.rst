@@ -92,7 +92,7 @@ available at the destination::
 Astakos keeps a map of shibboleth users using the value of the ``REMOTE_USER``
 header, passed by the ``mod_shib2`` module. This happens in order to be able to
 identify the astakos account the shibboleth user is associated to, every time
-the user logs in from an affiliate shibboleth IdP. 
+the user logs in from an affiliate shibboleth IdP.
 
 The shibboleth attribute which gets mapped to the ``REMOTE_USER`` header can be
 changed in ``/etc/shibboleth/shibboleth2.xml`` configuration file.
@@ -100,7 +100,7 @@ changed in ``/etc/shibboleth/shibboleth2.xml`` configuration file.
 .. code-block:: xml
 
     <!-- The ApplicationDefaults element is where most of Shibboleth's SAML bits are defined. -->
-        <ApplicationDefaults entityID="https://sp.example.org/shibboleth" 
+        <ApplicationDefaults entityID="https://sp.example.org/shibboleth"
          REMOTE_USER="eppn persistent-id targeted-id">
 
 .. warning::
@@ -2329,9 +2329,9 @@ Scaling up to multiple nodes
 Here we will describe how should a large scale Synnefo deployment look like. Make
 sure you are familiar with Synnefo and Ganeti before proceeding with this section.
 This means you should at least have already set up successfully a working Synnefo
-deployment as described in the :ref:`Admin's Installation Guide
-<quick-install-admin-guide>` and also read the Administrator's Guide until this
-section.
+deployment as described in the Admin's Installation Guide (:ref:`Debian
+<install-guide-debian>`/:ref:`CentOS <install-guide-centos>`) and also read the
+Administrator's Guide until this section.
 
 Graph of a scale-out Synnefo deployment
 ---------------------------------------
