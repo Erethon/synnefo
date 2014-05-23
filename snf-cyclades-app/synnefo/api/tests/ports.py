@@ -1,4 +1,4 @@
-# Copyright 2011-2013 GRNET S.A. All rights reserved.
+# Copyright 2011-2014 GRNET S.A. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or
 # without modification, are permitted provided that the following
@@ -46,9 +46,19 @@ PORTS_URL = join_urls(NETWORK_URL, "ports/")
 
 
 class PortTest(BaseAPITest):
+    def test_not_allowed_methods(self):
+        response = self.delete(PORTS_URL)
+        self.assertMethodNotAllowed(response)
+
+        response = self.put(PORTS_URL)
+        self.assertMethodNotAllowed(response)
+
+        url = join_urls(PORTS_URL, "123")
+        response = self.post(self)
+        self.assertMethodNotAllowed(response)
+
     def test_get_ports(self):
-        url = join_urls(PORTS_URL)
-        response = self.get(url)
+        response = self.get(PORTS_URL)
         self.assertEqual(response.status_code, 200)
         ports = json.loads(response.content)
         self.assertEqual(ports, {"ports": []})
