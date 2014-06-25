@@ -43,7 +43,7 @@ class Command(SynnefoCommand):
         make_option('--filter-by',
                     help="Filter by field; "
                     "e.g. \"user=uuid,usage>=10M,base_quota<inf\""),
-        make_option('--displayname',
+        make_option('--display-mails',
                     action='store_true',
                     help="Show user display name"),
     )
@@ -59,7 +59,7 @@ class Command(SynnefoCommand):
     @transaction.commit_on_success
     def handle(self, *args, **options):
         output_format = options["output_format"]
-        displayname = bool(options["displayname"])
+        displayname = bool(options["display-mails"])
         unit_style = options["unit_style"]
         common.check_style(unit_style)
 

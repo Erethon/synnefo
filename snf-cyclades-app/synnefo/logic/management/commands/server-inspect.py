@@ -33,11 +33,11 @@ class Command(SynnefoCommand):
             default=False,
             help="Show non-archived jobs concerning server."),
         make_option(
-            '--displayname',
+            '--display-mails',
             action='store_true',
             dest='displayname',
             default=False,
-            help="Display both uuid and display name"),
+            help="Display both uuid and email"),
     )
 
     def handle(self, *args, **options):
