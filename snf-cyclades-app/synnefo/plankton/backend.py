@@ -207,7 +207,7 @@ class PlanktonBackend(object):
                                         ' characters' % MAX_META_KEY_LENGTH)
             if len(v) > 256:
                 raise faults.BadRequest('Metadata values should be less than'
-                                        ' %scharacters.'
+                                        ' %s characters.'
                                         % MAX_META_VALUE_LENGTH)
             prefixed[k] = v
 

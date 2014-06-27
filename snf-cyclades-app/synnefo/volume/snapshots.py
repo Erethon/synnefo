@@ -49,6 +49,8 @@ def create(user_id, volume, name, description, metadata, force=False):
 
     if name is None:
         raise faults.BadRequest("Snapshot 'name' is required")
+    if len(name) > 256:
+        raise faults.BadRequest("Snapshot 'name' is too long")
 
     # Check that taking a snapshot is feasible
     if volume.machine is None:

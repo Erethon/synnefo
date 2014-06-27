@@ -58,7 +58,7 @@ class Command(SynnefoCommand):
 
         description = options.get("description")
         if description is None:
-            description = "Snapshot of Volume '%s" % volume.id
+            description = "Snapshot of Volume '%s'" % volume.id
 
         snapshot = snapshots.create(volume.userid,
                                     volume,
