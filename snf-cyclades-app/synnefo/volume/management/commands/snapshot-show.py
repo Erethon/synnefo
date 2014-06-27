@@ -42,8 +42,15 @@ class Command(SynnefoCommand):
 
         snapshot_id = args[0]
         userid = options["userid"]
+        if userid is None:
+            raise CommandError("'user' option is required")
 
-        with PlanktonBackend(userid) as backend:
-            snapshot = backend.get_snapshot(userid, snapshot_id)
-        utils.pprint_table(out=self.stdout, table=[snapshot.values()],
-                           headers=snapshot.keys(), vertical=True)
+        try:
+            with PlanktonBackend(userid) as backend:
+                snapshot = backend.get_snapshot(userid, snapshot_id)
+            utils.pprint_table(out=self.stdout, table=[snapshot.values()],
+                               headers=snapshot.keys(), vertical=True)
+        except:
+            raise CommandError("An error occurred, verify that snapshot and "
+                               "user ID are valid")
+
