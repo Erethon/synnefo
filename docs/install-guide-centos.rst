@@ -1,6 +1,6 @@
 .. _install-guide-centos:
 
-Administrator's Installation Guide (on CentOS 6.5)
+Administrator's Installation Guide (on CentOS 7)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. warning::
@@ -10,11 +10,11 @@ Administrator's Installation Guide (on CentOS 6.5)
     <https://www.synnefo.org/docs/synnefo/0.15.2/index.html>`_
     instead.
 
-This is the Administrator's installation guide on CentOS 6.5.
+This is the Administrator's installation guide on CentOS 7.
 
 It describes how to install the whole Synnefo stack on two (2) physical nodes,
 with minimum configuration. It installs Synnefo from CentOS packages, and
-assumes the nodes run CentOS 6.5. After successful installation, you will
+assumes the nodes run CentOS 7. After successful installation, you will
 have the following services running:
 
     * Identity Management (Astakos)
@@ -54,7 +54,7 @@ to your installation. To do so, run:
 
 .. code-block:: console
 
-  # yum localinstall https://dev.grnet.gr/files/grnet-repo.rpm
+  # yum localinstall https://dev.grnet.gr/files/grnet-repo-el7.rpm
 
 To verify the authenticity of the package you can use our public key found
 `here <https://dev.grnet.gr/files/apt-grnetdev.pub>`_.
@@ -64,10 +64,7 @@ To install it, run:
 
 .. code-block:: console
 
-   # yum localinstall http://ftp.ntua.gr/pub/linux/fedora-epel/6/i386/epel-release-6-8.noarch.rpm
-
-You can verify the above package and its key from the `Fedora project's keys
-page <https://fedoraproject.org/keys>`_.
+   # yum install epel-release
 
 Update your list of packages and continue with the installation:
 
@@ -113,26 +110,14 @@ You can install apache, ntp and rabbitmq by running:
 
 .. code-block:: console
 
-   # yum install httpd ntp rabbitmq-server
+   # yum install httpd ntp rabbitmq-server postgresql-server
 
-To install postgresql, edit the file ``/etc/yum.repos.d/CentOS-Base.repo`` and
-in the ``base`` and ``updates`` sections append:
-
-.. code-block:: console
-
-   exclude=postgresql*
-
-Now run:
+To initialize postgres and set it to automatically start on boot run:
 
 .. code-block:: console
 
-   # yum localinstall http://yum.postgresql.org/9.3/redhat/rhel-6-x86_64/pgdg-centos93-9.3-1.noarch.rpm
-   # yum install postgresql93-server
-   # service postgresql-9.3 initdb
-   # chkconfig postgresql-9.3 on
-
-For more information on how to install postgresql on CentOS, please see `this
-<https://wiki.postgresql.org/wiki/YUM_Installation>`_.
+   # postgresql-setup initdb
+   # systemctl enable postgresql.service
 
 To install gunicorn and gevent, run:
 
@@ -151,14 +136,14 @@ Database setup
 ~~~~~~~~~~~~~~
 
 Configure the database to listen to all network interfaces. You can do this by
-editing the file ``/var/lib/pgsql/9.3/data/postgresql.conf`` and change
+editing the file ``/var/lib/pgsql/data/postgresql.conf`` and change
 ``listen_addresses`` to ``'*'`` :
 
 .. code-block:: console
 
     listen_addresses = '*'
 
-Furthermore, edit ``/var/lib/pgsql/9.3/data/pg_hba.conf`` to allow node1 and
+Furthermore, edit ``/var/lib/pgsql/data/pg_hba.conf`` to allow node1 and
 node2 to connect to the database. Add the following lines under ``#IPv4 local
 connections:`` :
 
@@ -172,7 +157,7 @@ actual IPs. Now, restart the server to apply the changes:
 
 .. code-block:: console
 
-   # /etc/init.d/postgresql-9.3 restart
+   # systemctl restart postgresql.service
 
 On node1, we create a database called ``snf_apps``, that will host all django
 apps related tables. We also create the user ``synnefo`` and grant him all
@@ -246,6 +231,9 @@ Now edit the file ``/etc/httpd/conf.d/ssl.conf``, delete the default
         ServerName node1.example.com
 
         Alias /static "/usr/share/synnefo/static"
+        <Directory /usr/share/synnefo/static>
+            Require all granted
+        </Directory>
 
         #  SetEnv no-gzip
         #  SetEnv dont-vary
@@ -280,7 +268,7 @@ Now edit the file ``/etc/httpd/conf.d/ssl.conf``, delete the default
 
 .. warning:: Do NOT start/restart the server yet. If the server is running::
 
-       # service httpd stop
+       # systemctl stop httpd
 
 
 .. _rabbitmq-setup:
@@ -294,7 +282,7 @@ exchanges:
 
 .. code-block:: console
 
-   # service rabbitmq-server start
+   # systemctl start rabbitmq-server
    # rabbitmqctl add_user synnefo "example_rabbitmq_passw0rd"
    # rabbitmqctl set_permissions synnefo ".*" ".*" ".*"
 
@@ -376,8 +364,8 @@ Once done, run:
 
 .. code-block:: console
 
-   # service rpcbind restart
-   # service nfs restart
+   # systemctl restart rpcbind
+   # systemctl restart nfs
 
 Archipelago setup
 ~~~~~~~~~~~~~~~~~
@@ -417,7 +405,6 @@ Finally, start Archipelago:
 .. code-block:: console
 
    # archipelago restart
-
 
 DNS server setup
 ~~~~~~~~~~~~~~~~
@@ -470,7 +457,7 @@ Finally, restart dnsmasq:
 
 .. code-block:: console
 
-   # service dnsmasq restart
+   # systemctl restart dnsmasq
 
 You are now ready with all general prerequisites concerning node1. Let's go to
 node2.
@@ -546,6 +533,9 @@ As before, edit the file ``/etc/httpd/conf.d/ssl.conf``, delete the default
         ServerName node2.example.com
 
         Alias /static "/usr/share/synnefo/static"
+        <Directory /usr/share/synnefo/static>
+            Require all granted
+        </Directory>
 
         SetEnv no-gzip
         SetEnv dont-vary
@@ -574,7 +564,7 @@ As before, edit the file ``/etc/httpd/conf.d/ssl.conf``, delete the default
 
 .. warning:: Do NOT start/restart the server yet. If the server is running::
 
-       # service httpd stop
+       # systemctl stop httpd
 
 
 Acquire certificate
@@ -640,7 +630,7 @@ Copy the file ``/etc/gunicorn.d/synnefo.example`` to
     ``synnefo.settings`` module. Also set the Gunicorn config file to
     ``--config=/etc/synnefo/gunicorn-hooks/gunicorn-archipelago.py``.
 
-       # service gunicorn stop
+       # systemctl stop gunicorn
 
 Conf Files
 ----------
@@ -1023,8 +1013,8 @@ Finally, we initialize the servers on node1:
 
 .. code-block:: console
 
-    root@node1:~ # service gunicorn restart
-    root@node1:~ # service httpd restart
+    root@node1:~ # systemctl restart gunicorn
+    root@node1:~ # systemctl restart httpd
 
 We have now finished the Astakos setup. Let's test it now.
 
@@ -1130,7 +1120,7 @@ Finally, restart Archipelago:
 
 .. code-block:: console
 
-   # service archipelago restart
+   # archipelago restart
 
 .. _conf-pithos:
 
@@ -1153,7 +1143,7 @@ Copy the file ``/etc/gunicorn.d/synnefo.example`` to
     ``synnefo.settings`` module. Also set the Gunicorn config file to
     ``--config=/etc/synnefo/gunicorn-hooks/gunicorn-archipelago.py``.
 
-       # service gunicorn stop
+       # systemctl stop gunicorn
 
 Conf Files
 ----------
@@ -1281,8 +1271,8 @@ After configuration is done, we initialize the servers on node2:
 
 .. code-block:: console
 
-    root@node2:~ # service gunicorn restart
-    root@node2:~ # service httpd restart
+    root@node2:~ # systemctl restart gunicor
+    root@node2:~ # systemctl restart httpd
 
 You have now finished the Pithos setup. Let's test it now.
 
@@ -2342,7 +2332,7 @@ Restart gunicorn on node1:
 
 .. code-block:: console
 
-   # service gunicorn restart
+   # systemctl restart gunicorn
 
 Now let's do the final connections of Cyclades with Ganeti.
 
@@ -2362,7 +2352,7 @@ and start the daemon:
 
 .. code-block:: console
 
-   # service snf-dispatcher start
+   # systemctl start snf-dispatcher
 
 You can see that everything works correctly by tailing its log file
 ``/var/log/synnefo/dispatcher.log``.
@@ -2385,7 +2375,7 @@ and start the daemon:
 
 .. code-block:: console
 
-   # service snf-ganeti-eventd start
+   # systemctl start snf-ganeti-eventd
 
 .. warning:: Make sure you start ``snf-ganeti-eventd`` *ONLY* on GANETI MASTER
 
