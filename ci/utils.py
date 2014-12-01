@@ -50,6 +50,8 @@ DEFAULT_SYSTEM_IMAGES_UUID = [
     "25ecced9-bf53-4145-91ee-cf47377e9fb2",  # production (okeanos.grnet.gr)
     "04cbe33f-29b7-4ef1-94fb-015929e5fc06",  # testing (okeanos.io)
 ]
+# Run CI against a two node installation
+TWO_NODE_INSTALLATION = False
 
 
 def _run(cmd, verbose):
@@ -375,6 +377,15 @@ class SynnefoCI(object):
             return fip
         self.logger.error("No more IP addresses available")
         sys.exit(1)
+
+    def _create_network(self, name=None):
+        """Create a network for the VM"""
+        self.setup_kamaki()
+        network = self.network_client.create_network(type="MAC_FILTERED",
+                                                     name=name)
+        self.logger.debug("Creating a new network with id %s", network["id"])
+        return network
+
 
     def _create_port(self, floating_ip):
         """Create a new port for our floating IP"""

@@ -36,6 +36,7 @@ RUN_BURNIN_CMD = "burnin"
 CREATE_X2GO_FILE = "x2goplugin"
 SHELL_CONNECT = "shell"
 ALL_CMDS = "all"
+TWO_NODE = "two_node"
 
 DEFAULT_CONFIG_FILE = os.path.expanduser("~/.synnefo_ci")
 
@@ -48,10 +49,16 @@ COMMANDS_IN_ALL_MODE = [
     RUN_BURNIN_CMD,
 ]
 
+COMMANDS_IN_TWO_NODE = [
+    CREATE_SERVER_CMD,
+    COMMANDS_IN_ALL_MODE,
+]
+
 AVAILABLE_COMMANDS = [
     CREATE_X2GO_FILE,
     DELETE_SERVER_CMD,
     SHELL_CONNECT,
+    TWO_NODE,
 ] + COMMANDS_IN_ALL_MODE
 
 USAGE = """usage: %%prog [options] command[,command...]
@@ -66,6 +73,7 @@ command:
     * %s: Create x2go plugin file
     * %s: Delete the slave server
     * %s: Connect to the server using ssh
+    * %s: Deploy using a two node installation
 
     * %s: Run all the available commands
 """ % tuple([CREATE_SERVER_CMD,
@@ -77,6 +85,7 @@ command:
              CREATE_X2GO_FILE,
              DELETE_SERVER_CMD,
              SHELL_CONNECT,
+             TWO_NODE,
              ALL_CMDS])
 
 
@@ -157,7 +166,9 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
     if commands == ALL_CMDS:
         for cmd in COMMANDS_IN_ALL_MODE:
             setattr(options, cmd, True)
-
+    elif commands == "two_node" :
+        for cmd in COMMANDS_IN_TWO_NODE:
+            setattr(options, cmd, True)
     else:
         commands = commands.split(",")
         for command in commands:
@@ -181,6 +192,8 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
     # Initialize SynnefoCi
     utils.USE_COLORS = options.use_colors
     utils.IGNORE_SSL = options.ignore_ssl
+
+
     config_file = options.config_file
     if config_file is not None:
         config_file = os.path.expanduser(config_file)
@@ -191,6 +204,8 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
                                  build_id=options.build_id,
                                  cloud=options.kamaki_cloud)
 
+    synnefo_ci._create_network()
+    exit()
     # ----------------------------------
     # Run commands
     if getattr(options, CREATE_SERVER_CMD, False):
