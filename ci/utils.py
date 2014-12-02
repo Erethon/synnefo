@@ -190,8 +190,13 @@ class SynnefoCI(object):
         self.config.read(config_file)
 
         # Read temporary_config file
+        self.temp_config_dir = self.config.get('Global',
+                                               'temporary_config_dir')
+        if not os.path.exists(self.temp_config_dir):
+            os.mkdir(self.temp_config_dir)
         self.temp_config_file = \
-            os.path.expanduser(self.config.get('Global', 'temporary_config'))
+            os.path.expanduser(self.temp_config_dir + \
+                               self.config.get('Global', 'temporary_config'))
         self.temp_config = ConfigParser()
         self.temp_config.optionxform = str
         self.temp_config.read(self.temp_config_file)
