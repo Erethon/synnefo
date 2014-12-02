@@ -34,12 +34,14 @@ DEPLOY_SYNNEFO_CMD = "deploy"
 TEST_SYNNEFO_CMD = "test"
 RUN_BURNIN_CMD = "burnin"
 CREATE_X2GO_FILE = "x2goplugin"
+CREATE_SSH_KEY = "ssh_key"
 SHELL_CONNECT = "shell"
 ALL_CMDS = "all"
 
 DEFAULT_CONFIG_FILE = os.path.expanduser("~/.synnefo_ci")
 
 COMMANDS_IN_ALL_MODE = [
+    CREATE_SSH_KEY,
     CREATE_SERVER_CMD,
     BUILD_SYNNEFO_CMD,
     BUILD_DOCS_SYNNEFO_CMD,
@@ -63,6 +65,7 @@ command:
     * %s: Deploy Synnefo in created server
     * %s: Run Synnefo unittests
     * %s: Run snf-burnin in the deployed Synnefo
+    * %s: Create a temp SSH key pair and upload both private and public keys to server(s)
     * %s: Create x2go plugin file
     * %s: Delete the slave server
     * %s: Connect to the server using ssh
@@ -74,6 +77,7 @@ command:
              DEPLOY_SYNNEFO_CMD,
              TEST_SYNNEFO_CMD,
              RUN_BURNIN_CMD,
+             CREATE_SSH_KEY,
              CREATE_X2GO_FILE,
              DELETE_SERVER_CMD,
              SHELL_CONNECT,
@@ -157,7 +161,6 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
     if commands == ALL_CMDS:
         for cmd in COMMANDS_IN_ALL_MODE:
             setattr(options, cmd, True)
-
     else:
         commands = commands.split(",")
         for command in commands:
@@ -181,6 +184,8 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
     # Initialize SynnefoCi
     utils.USE_COLORS = options.use_colors
     utils.IGNORE_SSL = options.ignore_ssl
+
+
     config_file = options.config_file
     if config_file is not None:
         config_file = os.path.expanduser(config_file)
@@ -193,6 +198,8 @@ def main():  # pylint: disable=too-many-statements, too-many-branches
 
     # ----------------------------------
     # Run commands
+    if getattr(options, CREATE_SSH_KEY, False):
+        synnefo_ci.create_temp_ssh_key()
     if getattr(options, CREATE_SERVER_CMD, False):
         synnefo_ci.create_server(flavor=options.flavor,
                                  image=options.image,

@@ -29,6 +29,8 @@ import fabric.api as fabric
 import simplejson as json
 import subprocess
 import tempfile
+import string
+import random
 from ConfigParser import ConfigParser, DuplicateSectionError
 
 from kamaki.cli import config as kamaki_config
@@ -390,6 +392,33 @@ class SynnefoCI(object):
             net_id, device_id=None, fixed_ips=fixed_ips)
         return port
 
+    def create_temp_ssh_key(self):
+        """Create a SSH key to use for authentication"""
+        try:
+            from Crypto.PublicKey import RSA
+        except ImportError:
+            self.logger.error("PyCrypto is needed")
+            sys.exit(1)
+
+        self.session = \
+            ''.join(random.SystemRandom().choice(string.ascii_letters) \
+                    for i in range(6))
+
+        self.public_key = self.temp_config_dir + self.session + "_public"
+        self.private_key = self.temp_config_dir + self.session + "_private"
+        temp_key = RSA.generate(4096)
+
+        temp_public = open(self.public_key, "w")
+        temp_public.write(temp_key.exportKey("OpenSSH") + " ci_key_" + \
+                          self.session)
+        temp_public.close()
+
+        temp_private = open(self.private_key, "w")
+        temp_private.write(temp_key.exportKey())
+        temp_private.close()
+
+        os.chmod(self.private_key, 0400)
+
     @_check_kamaki
     # Too many local variables. pylint: disable-msg=R0914
     def create_server(self, image=None, flavor=None, ssh_keys=None,
@@ -446,6 +475,14 @@ class SynnefoCI(object):
         server = self._wait_transition(server_id, "BUILD", "ACTIVE")
         self._get_server_ip_and_port(server, private_networks)
         self._copy_ssh_keys(ssh_keys)
+
+        # Setup temp SSH keys
+        if self.session:
+            self.write_temp_config('ci_session', self.session)
+            self.write_temp_config('private_key', self.private_key)
+            self._copy_ssh_keys(self.public_key)
+            self.logger.debug("Uploading private SSH key file")
+            _put(self.private_key, "/root/.ssh/id_rsa")
 
         # Setup Firewall
         self.setup_fabric()
