@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,6 +87,12 @@ class Command(ListCommand):
         app = project.last_application
         return app.id if app and app.state == app.PENDING else ""
 
+    def get_description(project):
+        return project.description
+
+    def get_end_date(project):
+        return project.end_date
+
     FIELDS = {
         "id": ("uuid", "Project ID"),
         "name": ("realname", "Project Name"),
@@ -94,6 +100,8 @@ class Command(ListCommand):
         "status": (get_status, "Project Status"),
         "pending_app": (get_pending_app,
                         "An application pending for the project"),
+        "description": (get_description, "Project Description"),
+        "end_date": (get_end_date, "Project Termination Date"),
     }
 
     fields = ["id", "name", "owner", "status", "pending_app"]
