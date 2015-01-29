@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,6 +103,10 @@ class Command(SynnefoCommand):
             server.save()
             msg = "Changed the owner of server '%s' from '%s' to '%s'.\n"
             self.stdout.write(msg % (server, old_owner, new_owner))
+            for vol in server.volumes.all():
+                vol.userid = new_owner
+                msg = "Changed the owner of volume '%s' from '%s' to '%s'.\n"
+                self.stdout.write(msg % (vol, old_owner, new_owner))
 
         wait = parse_bool(options["wait"])
         new_flavor_id = options.get("flavor")
