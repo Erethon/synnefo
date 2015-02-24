@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import hmac
 from copy import deepcopy
 
 from snf_django.utils.testing import (BaseAPITest, mocked_quotaholder,
@@ -954,6 +955,48 @@ class ServerVNCConsole(ComputeAPITest):
         response = self.mypost('servers/%d/action' % vm.id,
                                vm.userid, data, 'json')
         self.assertBadRequest(response)
+
+
+class ServerVerify(ComputeAPITest):
+    def test_verified_server(self):
+        """Test already verified server"""
+        vm = mfactory.VirtualMachineFactory()
+        vm.operstate = 'STARTED'
+        vm.verified = True
+        vm.save()
+
+        data = json.dumps({'hash': 'test'})
+        response = self.mypost('servers/%d/verify' % vm.id, data, 'json')
+        self.assertBadRequest(response)
+
+    def test_invalid_id(self):
+        """Test invalid server id"""
+        response = self.mypost('servers/%s/verify' % 'indavlid')
+        self.assertBadRequest(response)
+
+    def test_not_existing_id(self):
+        """Test valid but not existing server id"""
+        response = self.mypost('servers/%s/verify' % '666666')
+        self.assertItemNotFound(response)
+
+    def test_wrong_verification_token(self):
+        """Test wrong verification token"""
+        vm = mfactory.VirtualMachineFactory()
+        data = json.dumps({'hash': 'wrong'})
+        response = self.mypost('servers/%d/verify' % vm.id, vm.userid, data,
+                               'json')
+        self.assertBadRequest(response)
+
+    def test_correct_verification_token(self):
+        """Test correct verification token"""
+        vm = mfactory.VirtualMachineFactory()
+        token = hmac.new(settings.CYCLADES_STATS_SECRET_KEY, str(vm.created) +
+                         str(vm.id))
+        token = token.hexdigest()
+        data = json.dumps({'hash': token})
+        response = self.mypost('servers/%d/verify' % vm.id, vm.userid, data,
+                               'json')
+        self.assertEqual(response.status_code, 200)
 
 
 @patch('synnefo.logic.rapi_pool.GanetiRapiClient')

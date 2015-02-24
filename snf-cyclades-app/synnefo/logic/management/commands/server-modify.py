@@ -51,6 +51,13 @@ class Command(SynnefoCommand):
             metavar="True|False",
             help="Mark a server as suspended/non-suspended."),
         make_option(
+            "--verified",
+            dest="verified",
+            default=None,
+            choices=["True", "False"],
+            metavar="True|False",
+            help="Mark a server as verified/non-verified."),
+        make_option(
             "--flavor",
             dest="flavor",
             metavar="FLAVOR_ID",
@@ -93,6 +100,14 @@ class Command(SynnefoCommand):
             server.save()
             self.stdout.write("Set server '%s' as suspended=%s\n" %
                               (server, suspended))
+
+        verified = options.get("verified", None)
+        if verified is not None:
+            verified = parse_bool(verified)
+            server.verified = verified
+            server.save()
+            self.stdout.write("Set server '%s' as verified=%s\n" %
+                              (server, verified))
 
         new_owner = options.get('user')
         if new_owner is not None:

@@ -93,6 +93,7 @@ class Command(ListCommand):
         "suspended": ("suspended", "Whether the server is administratively"
                       " suspended"),
         "project": ("project", "The project UUID"),
+        "verified": ("verified", "Whether the server is verified or not"),
     }
 
     fields = ["id", "name", "user.uuid", "state", "flavor", "image.id",
@@ -128,7 +129,7 @@ class ImageCache(object):
         self.images = {}
 
     def get_image(self, imageid, userid):
-        if not imageid in self.images:
+        if imageid not in self.images:
             try:
                 self.images[imageid] = get_image(imageid, userid)['name']
             except Exception as e:

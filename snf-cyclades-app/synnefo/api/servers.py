@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ from synnefo.db.models import (VirtualMachine, VirtualMachineMetadata)
 from synnefo.logic import servers, utils as logic_utils, server_attachments
 from synnefo.volume.util import get_volume
 
+import hmac
+
 from logging import getLogger
 log = getLogger(__name__)
 
@@ -45,6 +47,7 @@ urlpatterns = patterns(
     (r'^/(\d+)/metadata/(.+?)(?:.json|.xml)?$', 'metadata_item_demux'),
     (r'^/(\d+)/stats(?:.json|.xml)?$', 'server_stats'),
     (r'^/(\d+)/diagnostics(?:.json)?$', 'get_server_diagnostics'),
+    (r'^/(\d+)/verify(?:.json)?$', 'verify_demux'),
     (r'^/(\d+)/os-volume_attachments(?:.json)?$', 'demux_volumes'),
     (r'^/(\d+)/os-volume_attachments/(\d+)(?:.json)?$', 'demux_volumes_item'),
 )
@@ -127,6 +130,16 @@ def demux_volumes_item(request, server_id, volume_id):
     else:
         return api.api_method_not_allowed(request,
                                           allowed_methods=['GET', 'DELETE'])
+
+
+def verify_demux(request, server_id):
+    if request.method == 'GET':
+        return get_verify_token(request, server_id)
+    elif request.method == 'POST':
+        return verify_server(request, server_id)
+    else:
+        return api.api_method_not_allowed(request,
+                                          allowed_methods=['GET', 'POST'])
 
 
 def nic_to_attachments(nic):
@@ -1244,3 +1257,40 @@ def detach_volume(request, server_id, volume_id):
     vm = server_attachments.detach_volume(vm, volume)
     # TODO: Check volume state, send job to detach volume
     return HttpResponse(status=202)
+
+
+@transaction.commit_on_success
+@api.api_method(http_method='POST', token_required=False, user_required=False, logger=log)
+def verify_server(request, server_id):
+    req = utils.get_json_body(request)
+    log.debug("verify_server server_id %s request %s", server_id, req)
+    secret_key = settings.CYCLADES_STATS_SECRET_KEY
+
+    # There is a potential information disclosure here
+    servers = VirtualMachine.objects.filter(id=server_id)
+    if not servers:
+        raise faults.ItemNotFound("Virtual Machine doesn't exist")
+
+    vm = servers.get(id=server_id)
+    if not vm.verified:
+        vhash = req["hash"]
+        vm_hash = hmac.new(secret_key, str(vm.created) + str(server_id))
+        # We should use hmac.compare_digest once python 2.7.7 is available
+        if vhash == vm_hash.hexdigest():
+            vm.verified = True
+            vm.save()
+            return HttpResponse(status=200)
+        raise faults.BadRequest("Invalid hash")
+    # Another information disclosure right here
+    raise faults.BadRequest("Virtual Machine already verified")
+
+
+@api.api_method(http_method='GET', user_required=True, logger=log)
+def get_verify_token(request, server_id):
+    log.debug("get_verify_token server_id %s", server_id)
+    secret_key = settings.CYCLADES_STATS_SECRET_KEY
+    user_id = request.user_uniq
+    vm = util.get_vm(server_id, user_id, for_update=False, non_deleted=True)
+    vhash = hmac.new(secret_key, str(vm.created) + str(server_id))
+    data = json.dumps({"hash": vhash.hexdigest()})
+    return HttpResponse(data, status=200)
