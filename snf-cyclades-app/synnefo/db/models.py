@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -343,6 +343,8 @@ class VirtualMachine(models.Model):
     serial = models.ForeignKey(QuotaHolderSerial,
                                related_name='virtual_machine', null=True,
                                on_delete=models.SET_NULL)
+
+    verified = models.BooleanField('Verified Virtual Machine', default=False)
 
     # VM State
     # The following fields are volatile data, in the sense
