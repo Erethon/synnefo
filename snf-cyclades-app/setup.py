@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ EXTRAS_REQUIRES = {
 }
 
 TESTS_REQUIRES = [
-    'factory_boy==2.1.0'
+    'factory_boy==2.5.0'
 ]
 
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 GRNET S.A.
+# Copyright (C) 2010-2015 GRNET S.A.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,8 +44,10 @@ def random_string(x):
 
 
 class VolumeTypeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.VolumeType
-    FACTORY_DJANGO_GET_OR_CREATE = ("disk_template",)
+    class Meta:
+        model = models.VolumeType
+        django_get_or_create = ("disk_template",)
+
     name = factory.Sequence(prefix_seq("vtype"))
     disk_template = FuzzyChoice(
         choices=["file", "plain", "drbd", "ext_archipelago"]
@@ -54,7 +56,8 @@ class VolumeTypeFactory(factory.DjangoModelFactory):
 
 
 class FlavorFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Flavor
+    class Meta:
+        model = models.Flavor
 
     cpu = factory.Sequence(lambda n: n + 2, type=int)
     ram = factory.Sequence(lambda n: n * 512, type=int)
@@ -64,7 +67,8 @@ class FlavorFactory(factory.DjangoModelFactory):
 
 
 class BackendFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Backend
+    class Meta:
+        model = models.Backend
 
     clustername = factory.Sequence(prefix_seq('cluster'))
     port = 5080
@@ -92,7 +96,8 @@ class OfflineBackend(BackendFactory):
 
 
 class VirtualMachineFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.VirtualMachine
+    class Meta:
+        model = models.VirtualMachine
 
     name = factory.Sequence(prefix_seq('vm'))
     userid = factory.Sequence(user_seq())
@@ -101,13 +106,15 @@ class VirtualMachineFactory(factory.DjangoModelFactory):
     flavor = factory.SubFactory(FlavorFactory)
     deleted = False
     suspended = False
-    #operstate = factory.Sequence(round_seq_first(FACTORY_FOR.OPER_STATES))
+    #operstate = factory.Sequence(round_seq_first(Meta.model.OPER_STATES))
     operstate = "STARTED"
     project = factory.LazyAttribute(lambda a: a.userid)
 
 
 class VolumeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Volume
+    class Meta:
+        model = models.Volume
+
     userid = factory.Sequence(user_seq())
     size = factory.Sequence(lambda x: x, type=int)
     name = factory.Sequence(lambda x: "volume-name-"+x, type=str)
@@ -142,7 +149,8 @@ class StopedVirtualMachine(VirtualMachineFactory):
 
 
 class VirtualMachineMetadataFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.VirtualMachineMetadata
+    class Meta:
+        model = models.VirtualMachineMetadata
 
     meta_key = factory.Sequence(prefix_seq('key'))
     meta_value = factory.Sequence(prefix_seq('pass'))
@@ -150,7 +158,8 @@ class VirtualMachineMetadataFactory(factory.DjangoModelFactory):
 
 
 class NetworkFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Network
+    class Meta:
+        model = models.Network
 
     name = factory.Sequence(prefix_seq('network'))
     userid = factory.Sequence(user_seq())
@@ -172,15 +181,17 @@ class DeletedNetwork(NetworkFactory):
 
 
 class BackendNetworkFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.BackendNetwork
+    class Meta:
+        model = models.BackendNetwork
 
     network = factory.SubFactory(NetworkFactory, state="ACTIVE")
     backend = factory.SubFactory(BackendFactory)
-    operstate = factory.Sequence(round_seq_first(FACTORY_FOR.OPER_STATES))
+    operstate = factory.Sequence(round_seq_first(Meta.model.OPER_STATES))
 
 
 class NetworkInterfaceFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.NetworkInterface
+    class Meta:
+        model = models.NetworkInterface
 
     userid = factory.Sequence(user_seq())
     name = factory.LazyAttribute(lambda self: random_string(30))
@@ -192,15 +203,17 @@ class NetworkInterfaceFactory(factory.DjangoModelFactory):
     public = factory.LazyAttribute(lambda self: self.network.public)
     state = "ACTIVE"
     firewall_profile =\
-        factory.Sequence(round_seq_first(FACTORY_FOR.FIREWALL_PROFILES))
+        factory.Sequence(round_seq_first(Meta.model.FIREWALL_PROFILES))
 
 
 class IPPoolTableFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.IPPoolTable
+    class Meta:
+        model = models.IPPoolTable
 
 
 class SubnetFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Subnet
+    class Meta:
+        model = models.Subnet
     network = factory.SubFactory(NetworkFactory, state="ACTIVE")
     name = factory.LazyAttribute(lambda self: random_string(30))
     dhcp = True
@@ -231,7 +244,8 @@ class NetworkWithSubnetFactory(NetworkFactory):
 
 
 class IPv4AddressFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.IPAddress
+    class Meta:
+        model = models.IPAddress
 
     userid = factory.Sequence(user_seq())
     network = factory.SubFactory(NetworkFactory, state="ACTIVE")
@@ -248,7 +262,8 @@ class IPv4AddressFactory(factory.DjangoModelFactory):
 
 
 class IPv6AddressFactory(IPv4AddressFactory):
-    FACTORY_FOR = models.IPAddress
+    class Meta:
+        model = models.IPAddress
 
     subnet = factory.SubFactory(IPv6SubnetFactory)
     network = factory.SubFactory(NetworkFactory, state="ACTIVE")
@@ -265,31 +280,39 @@ class FloatingIPFactory(IPv4AddressFactory):
 
 
 class SecurityGroupFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.SecurityGroup
+    class Meta:
+        model = models.SecurityGroup
 
     name = factory.LazyAttribute(lambda self: random_string(30))
 
 
 class BridgePoolTableFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.BridgePoolTable
+    class Meta:
+        model = models.BridgePoolTable
 
     size = 500
     base = 'snf-link-'
 
 
 class MacPrefixPoolTableFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.MacPrefixPoolTable
+    class Meta:
+        model = models.MacPrefixPoolTable
+
     size = 500
     base = 'aa:00:0'
 
 
 class QuotaHolderSerialFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.QuotaHolderSerial
+    class Meta:
+        model = models.QuotaHolderSerial
+
     serial = factory.Sequence(lambda x: x, type=int)
 
 
 class IPAddressLogFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.IPAddressLog
+    class Meta:
+        model = models.IPAddressLog
+
     address = "192.168.2.1"
     server_id = 1
     network_id = 1
