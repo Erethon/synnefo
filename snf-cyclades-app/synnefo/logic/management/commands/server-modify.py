@@ -47,6 +47,13 @@ class Command(SynnefoCommand):
                  " to the server. Finally, it assigns both the volumes and"
                  " the server to the system project of the destination user."),
         make_option(
+            '--reassign-ips',
+            dest='reassignips',
+            default=None,
+            choices=["True", "False"],
+            metavar="True|False",
+            help="If --user is specified, reassign attached IPs also"),
+        make_option(
             "--suspended",
             dest="suspended",
             default=None,
@@ -119,6 +126,16 @@ class Command(SynnefoCommand):
                 self.stdout.write(msg % (vol, old_owner, new_owner))
                 msg = "Changed the project of volume '%s' from '%s' to '%s'.\n"
                 self.stdout.write(msg % (vol, vol_old_project, new_owner))
+            if reassignips:
+                for ip in server.ips.all():
+                    ip.userid = new_owner
+                    ip_old_project = ip.project
+                    ip.project = new_owner
+                    ip.save()
+                    msg = "Changed the owner of IP '%s' from '%s' to '%s'.\n"
+                    self.stdout.write(msg % (ip, old_owner, new_owner))
+                    msg = "Changed the project of IP '%s' from '%s' to '%s'.\n"
+                    self.stdout.write(msg % (ip, ip_old_project, new_owner))
             self.stdout.write("WARNING: User quotas should be out of sync now,"
                               " run `snf-manage reconcile-resources-cyclades'"
                               " to review and update them.\n")
