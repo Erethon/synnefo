@@ -306,6 +306,8 @@ class Command(SynnefoCommand):
                 raise CommandError(m)
 
             user.set_email(newemail)
+            user.base_project.description = "system project for " \
+                                            "user %s" % newemail
             user.save()
 
     def confirm(self):
